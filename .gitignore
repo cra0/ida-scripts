@@ -1,2 +1,2 @@
 # Ignore other crap we don't need in the repo
-.csdf
+*.csdf
