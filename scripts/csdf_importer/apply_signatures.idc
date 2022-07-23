@@ -19,8 +19,8 @@ static processSignatures(sigFileName, logFileName)
 	fprintf(fhLog,"----- PROCESS LOG ----- \n");
 	
 	
-    fhSigFile = fopen(sigFileName,"r");	
-    while((line = readstr(fhSigFile)) != -1)
+	fhSigFile = fopen(sigFileName,"r");	
+	while((line = readstr(fhSigFile)) != -1)
 	{
 		if (strlen(line) <= 1)
 			continue;
@@ -118,11 +118,11 @@ static processSignatures(sigFileName, logFileName)
 		}
 
 		counter++;
-    }
+	}
 	fprintf(fhLog,"\n");
 	fprintf(fhLog,"Resolved: (%u/%u) Functions!\n", resolved_count, funcCount);
 	fprintf(fhLog,"----- PROCESS LOG ----- \n");
-    fclose(fhSigFile);	
+	fclose(fhSigFile);	
 	fclose(fhLog);
 	
 	Message("------------------------------------------ \n");
@@ -140,9 +140,9 @@ static main()
 	Message("------------------------------------------ \n");
 	Message("IDA Signature Resolver - cra0 (cra0.net) \n");  
 	
-    auto inputFilePath;
+	auto inputFilePath;
 	
-    inputFilePath = AskFile(0,"*.csdf","Cra0 Signature Definition File");
+	inputFilePath = AskFile(0,"*.csdf","Cra0 Signature Definition File");
 	if (inputFilePath != 0)
 	{
 		Message("Parsing: %s \n", inputFilePath);
