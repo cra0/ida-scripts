@@ -1,6 +1,8 @@
+// apply_signatures.idc : CSDF Signature Definition Importer
+// cra0 (cra0.net)
+// https://github.com/cra0/ida-scripts/tree/master/scripts/csdf_importer
+
 #include <idc.idc>
-
-
 
 static processSignatures(sigFileName, logFileName)
 {
