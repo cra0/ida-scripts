@@ -4,6 +4,33 @@
 
 #include <idc.idc>
 
+static getDirectoryPath(filePath)
+{
+	auto str = filePath;
+	auto i = strstr(str, "\\");
+	auto j = i + 1;
+	while (i != -1)
+	{
+		str = str[i+1:];
+		j = j + (i+1);
+		i = strstr(str, "\\");
+	}
+	auto path = substr(filePath, 0, j - 3);
+	return path;
+}
+
+static getFileName(filePath)
+{
+	auto str = filePath;
+	auto i = strstr(str, "\\");
+	while (i != -1)
+	{
+		str = str[i+1:];
+		i = strstr(str, "\\");
+	}
+	return str;
+}
+
 static processSignatures(sigFileName, logFileName)
 {
     auto fhSigFile, fhLog;
@@ -15,7 +42,8 @@ static processSignatures(sigFileName, logFileName)
 	auto peBaseAddress = SegStart(MinEA());
 	auto strFmtStr;
 
-	fhLog = fopen(logFileName,"w");
+	auto logFilePath = getDirectoryPath(sigFileName) + logFileName;
+	fhLog = fopen(logFilePath,"w");
 	fprintf(fhLog,"----- PROCESS LOG ----- \n");
 	
 	
