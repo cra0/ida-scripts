@@ -34,6 +34,7 @@ static getFileName(filePath)
 static processSignatures(sigFileName, logFileName)
 {
     auto fhSigFile, fhLog;
+	auto logFilePath;
 	auto line;
 	auto funcCount = 0;
 	auto counter = 0;
@@ -42,30 +43,28 @@ static processSignatures(sigFileName, logFileName)
 	auto peBaseAddress = SegStart(MinEA());
 	auto strFmtStr;
 
-	auto logFilePath = getDirectoryPath(sigFileName) + logFileName;
+	logFilePath = getDirectoryPath(sigFileName) + logFileName;
 	fhLog = fopen(logFilePath,"w");
 	fprintf(fhLog,"----- PROCESS LOG ----- \n");
-	
-	
+		
 	fhSigFile = fopen(sigFileName,"r");	
 	while((line = readstr(fhSigFile)) != -1)
 	{
 		if (strlen(line) <= 1)
 			continue;
 			
-		if (line == '\n')//skip new line
+		if (line == '\n')
 			continue;
 			
-		if (substr(line, 0, 2)=="//")//skip comments
+		if (substr(line, 0, 2)=="//")
 			continue;		
 			
-		if (funcCount == 0 && substr(line, 0, 2)=="-c")//skip comments
+		if (funcCount == 0 && substr(line, 0, 2)=="-c")
 		{
 			auto fcr = substr(line, 2, -1);
 			funcCount = atol(fcr);
 			fprintf(fhLog,"Function Count: %u\n", funcCount);
-			fprintf(fhLog,"\n");
-			
+			fprintf(fhLog,"\n");		
 			Message("Function Count: %u \n", funcCount);
 			continue;
 		}
@@ -85,7 +84,7 @@ static processSignatures(sigFileName, logFileName)
 		auto stknDiv3 = strstr(strTok3, "\"");	
 		auto funcName = substr(strTok3, 0, stknDiv3);
 		
-		
+		//Function Address
 		auto funcAddress = peBaseAddress + fAddressOffset;
 		
 		strFmtStr = "(%u/%u) [%x] [%s] ==>";
@@ -168,9 +167,7 @@ static main()
 	Message("------------------------------------------ \n");
 	Message("IDA Signature Resolver - cra0 (cra0.net) \n");  
 	
-	auto inputFilePath;
-	
-	inputFilePath = AskFile(0,"*.csdf","Cra0 Signature Definition File");
+	auto inputFilePath = AskFile(0,"*.csdf","Cra0 Signature Definition File");
 	if (inputFilePath != 0)
 	{
 		Message("Parsing: %s \n", inputFilePath);
