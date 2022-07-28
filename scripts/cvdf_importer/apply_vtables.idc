@@ -34,6 +34,7 @@ static getFileName(filePath)
 static processVTables(defFileName, logFileName)
 {
     auto fhDefFile, fhLog;
+	auto logFilePath;
 	auto line;
 	auto vtblCount = 0;
 	auto counter = 0;
@@ -42,7 +43,7 @@ static processVTables(defFileName, logFileName)
 	auto peBaseAddress = SegStart(MinEA());
 	auto strFmtStr;
 
-	auto logFilePath = getDirectoryPath(defFileName) + logFileName;
+	logFilePath = getDirectoryPath(defFileName) + logFileName;
 	fhLog = fopen(logFilePath,"w");
 	fprintf(fhLog,"----- PROCESS LOG ----- \n");
 	
