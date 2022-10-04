@@ -6,7 +6,7 @@ This directory contains scriptable plugins for IDA. Drop them into your `IDA\plu
 ---------------
 
 
-## [Get Address Offset Plugin](plugins/cvutils-getoffset.py)
+## [Get Address Offset Plugin](cvutils-getoffset.py)
 
 This plugin allows you to do a very simple operation. Get the offset from the image base of the current cursor. 
 Essentially it's copying to your clipboard the RVA. This is useful when you wish to jump to a *in-memory* live version of whatever you have dumped that is loaded inside IDA.
