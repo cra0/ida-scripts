@@ -16,3 +16,5 @@ Essentially it's copying to your clipboard the RVA. This is useful when you wish
 Right click anywhere in an IDA View and select **Get Offset**.
 Alternatively you can use the shortcut command `Ctrl+Shift+C`
 The offset will be copied to your clipboard.
+
+![screenshot-getoffset-plugin](examples/plugin-getoffset-demo.png)
