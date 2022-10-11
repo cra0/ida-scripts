@@ -18,3 +18,15 @@ Alternatively you can use the shortcut command `Ctrl+Shift+C`
 The offset will be copied to your clipboard.
 
 ![screenshot-getoffset-plugin](examples/plugin-getoffset-demo.png)
+
+
+
+## [Go To Offset Plugin](cvutils-gotooffset.py)
+
+This plugin allows you to jump to an address location given an offset.
+
+### **Usage Instructions:**
+
+Right click anywhere in an IDA View and select **Get Offset**.
+Press the shortcut command `Shift+G` to open the input dialog.
+Input the offset to and press Ok.
