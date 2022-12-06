@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
-# IDA Plugin to jump to an address given an offset from the Imagebase.
-# Copy the 'cvutils-gotooffset.py' into plugins directory of IDA
+# IDA Plugin to jump to an offset from the Imagebase.
+# Copy the 'cvutils-getoffset.py' into plugins directory of IDA
 #------------------------------------------------------------------------------
 
 VERSION = '1.0.0'
@@ -18,10 +18,19 @@ import idaapi
 import idautils
 import string
 
+
 major, minor = map(int, idaapi.get_kernel_version().split("."))
 using_ida7api = (major > 6)
 using_pyqt5 = using_ida7api or (major == 6 and minor >= 9)
 
+idaver_74newer = (major == 7 and minor >= 4)
+
+if idaver_74newer:
+    #IDA 7.4+
+    #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
+    import ida_ida
+    import ida_kernwin
+    
 if using_pyqt5:
     import PyQt5.QtGui as QtGui
     import PyQt5.QtCore as QtCore
@@ -35,6 +44,7 @@ else:
     QtCore.pyqtSignal = QtCore.Signal
     QtCore.pyqtSlot = QtCore.Slot
     from PySide.QtGui import QApplication
+    
 
 
 def PLUGIN_ENTRY():
@@ -133,6 +143,15 @@ class cvutils_gotooffset(idaapi.plugin_t):
 
 
 #------------------------------------------------------------------------------
+# Image Min EA
+#------------------------------------------------------------------------------
+def get_minEA(): 
+    if idaver_74newer:
+        return ida_ida.inf_get_min_ea()
+    else:
+        return idc.MinEA()
+
+#------------------------------------------------------------------------------
 # IsBadAddress
 #------------------------------------------------------------------------------
 
@@ -153,15 +172,15 @@ def isvalid_address(ea):
     
     Arguments:
         ea: The linear address to check.
-    """
-    print ("[%x]" % ea)
-    
+    """   
     if (ea == idaapi.BADADDR):
         print("[%x] BADADDR" % ea)
         return 0
         
-    if (ea < idc.MinEA()):
-        print("[%x] is lower than MinEA [%x]" % (ea, idc.MinEA()))
+    pe_min_ea = get_minEA()
+       
+    if (ea < pe_min_ea):
+        print("[%x] is lower than MinEA [%x]" % (ea, pe_min_ea))
         return 0
                
     if not idaapi.getseg(ea):
@@ -176,11 +195,15 @@ def isvalid_address(ea):
 #------------------------------------------------------------------------------
 
 def goto_offset():
-    hint_min_offset = idc.MinEA() - idaapi.get_imagebase()
+    hint_min_offset = get_minEA() - idaapi.get_imagebase()
     
     #Use string for now, force them to use hex as the offset
-    #offset_value = idc.AskLong(hint_min_offset, "Go to Offset:")
-    offset_value = idc.AskStr("0x%x" % hint_min_offset, "To Offset[HEX]:")
+    offset_value=None
+    if idaver_74newer:
+        offset_value = ida_kernwin.ask_str("0x%x" % hint_min_offset, 0, "To Offset[HEX]:")    
+    else:
+        offset_value = idc.AskStr("0x%x" % hint_min_offset, "To Offset[HEX]:")
+
     if not offset_value:
         print("No value was provided. Ignoring")
         return
@@ -190,7 +213,6 @@ def goto_offset():
         return
         
     offset_hex = int(offset_value, 16)
-    print ("Offset [%x]" % (offset_hex))
     if offset_hex == 0:
         idc.Warning("Input is Invalid!")
         return
