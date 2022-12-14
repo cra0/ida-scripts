@@ -27,6 +27,7 @@ This plugin allows you to jump to an address location given an offset.
 
 ### **Usage Instructions:**
 
-Right click anywhere in an IDA View and select **Get Offset**.
 Press the shortcut command `Shift+G` to open the input dialog.
-Input the offset to and press Ok.
+Input the offset you wish to jump to and press OK.
+
+![screenshot-gotooffset-plugin](examples/plugin-gotooffset-demo.png)
