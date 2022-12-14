@@ -21,6 +21,14 @@ major, minor = map(int, idaapi.get_kernel_version().split("."))
 using_ida7api = (major > 6)
 using_pyqt5 = using_ida7api or (major == 6 and minor >= 9)
 
+idaver_74newer = (major == 7 and minor >= 4)
+
+if idaver_74newer:
+    #IDA 7.4+
+    #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
+    import ida_ida
+    import ida_kernwin
+
 if using_pyqt5:
     import PyQt5.QtGui as QtGui
     import PyQt5.QtCore as QtCore
@@ -237,6 +245,16 @@ def inject_address_offset_copy_actions(form, popup, form_type):
     return 0
 
 #------------------------------------------------------------------------------
+# Get Screen linear address
+#------------------------------------------------------------------------------
+def get_screen_linear_address(): 
+    if idaver_74newer:
+        return idc.get_screen_ea()
+    else:
+        return idc.ScreenEA()
+
+
+#------------------------------------------------------------------------------
 # Get Offset
 #------------------------------------------------------------------------------
 
@@ -245,7 +263,7 @@ def getcopy_offset():
     Gets the offset of the current cursor's address
     """
     vImagebase = idaapi.get_imagebase()
-    vCurrentPos = idc.get_screen_ea()
+    vCurrentPos = get_screen_linear_address()
     if vCurrentPos != idaapi.BADADDR:
         vOffset = vCurrentPos - vImagebase
         print ("Address [0x%x] =-> Offset [%x] Copied to Clipboard!" % (vCurrentPos, vOffset))
