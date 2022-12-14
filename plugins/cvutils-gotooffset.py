@@ -141,6 +141,24 @@ class cvutils_gotooffset(idaapi.plugin_t):
         """
         idaapi.unregister_action(self.ACTION_GET_OFFSET)
 
+#------------------------------------------------------------------------------
+# Display a warning message box
+#------------------------------------------------------------------------------
+def display_warning(message): 
+    if idaver_74newer:
+        return idaapi.warning(message)
+    else:
+        return idc.Warning(message)
+   
+#------------------------------------------------------------------------------
+# Jump to a certain address
+#------------------------------------------------------------------------------
+def jump_to_address(jump_address): 
+    if idaver_74newer:
+        ida_kernwin.jumpto(jump_address)
+    else:
+        idc.Jump(jump_address)
+
 
 #------------------------------------------------------------------------------
 # Image Min EA
@@ -209,12 +227,13 @@ def goto_offset():
         return
     
     if not is_hex(offset_value):
-        print("Bad input; It doesn't contain valid hex")       
+        print("Bad input; It doesn't contain valid hex")
+        display_warning("Bad Input!")
         return
         
     offset_hex = int(offset_value, 16)
     if offset_hex == 0:
-        idc.Warning("Input is Invalid!")
+        display_warning("Input is Invalid!")
         return
        
     image_base = idaapi.get_imagebase()
@@ -222,9 +241,9 @@ def goto_offset():
     
     if (isvalid_address(jump_address)):
         print ("Offset [%x] =-> Address [0x%x]" % (offset_hex, jump_address))
-        idc.jumpto(jump_address)
+        jump_to_address(jump_address)
     else:
-        idc.Warning("Bad Offset!")
+        display_warning("Bad Offset!")
     
     return
 
