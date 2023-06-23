@@ -135,6 +135,10 @@ class cvutils_getoffset(idaapi.plugin_t):
         """
         Register the copy bytes action with IDA.
         """   
+        # If the action is already registered, unregister it first.
+        if idaapi.unregister_action(self.ACTION_GET_OFFSET):
+            idaapi.msg("Warning: action was already registered, unregistering it first\n")
+        
         vaction_desc = "Get the offset from the image base of the current cursor address."
         if (sys.version_info > (3, 0)):
             # Describe the action using python3 copy
@@ -157,7 +161,6 @@ class cvutils_getoffset(idaapi.plugin_t):
                 31                                                      # Copy icon
             )
 
-
         # register the action with IDA
         assert idaapi.register_action(action_desc), "Action registration failed"
 
@@ -177,14 +180,27 @@ class cvutils_getoffset(idaapi.plugin_t):
 
 class Hooks(idaapi.UI_Hooks):
 
-    def finish_populating_widget_popup(self, widget, popup):
+    def __init__(self):
+        # Call the __init__ method of the superclass
+        super(Hooks, self).__init__()
+
+        # Get the IDA version
+        major, minor = map(int, idaapi.get_kernel_version().split("."))
+        self.idaver_74newer = (major == 7 and minor >= 4)
+        
+        # If the IDA version is less than 7.4, define finish_populating_tform_popup
+        if not self.idaver_74newer:
+            self.finish_populating_tform_popup = self._finish_populating_tform_popup
+
+    def finish_populating_widget_popup(self, widget, popup_handle, ctx=None):
         """
-        A right click menu is about to be shown. (IDA 7)
+        A right click menu is about to be shown. (IDA 7.x)
         """
-        inject_address_offset_copy_actions(widget, popup, idaapi.get_widget_type(widget))
+        inject_address_offset_copy_actions(widget, popup_handle, idaapi.get_widget_type(widget))
         return 0
 
-    def finish_populating_tform_popup(self, form, popup):
+
+    def _finish_populating_tform_popup(self, form, popup):
         """
         A right click menu is about to be shown. (IDA 6.x)
         """
@@ -220,28 +236,15 @@ class Hooks(idaapi.UI_Hooks):
 # Prefix Wrappers
 #------------------------------------------------------------------------------
 
-def inject_address_offset_copy_actions(form, popup, form_type):
-    """
-    Inject prefix actions to popup menu(s) based on context.
-    """
-
-    #
-    # disassembly window
-    #
-
-    if form_type == idaapi.BWN_DISASMS:
-        # insert the prefix action entry into the menu
-        #
-
+def inject_address_offset_copy_actions(widget, popup_handle, widget_type):
+    if widget_type == idaapi.BWN_DISASMS:
         idaapi.attach_action_to_popup(
-            form,
-            popup,
+            widget,
+            popup_handle,
             cvutils_getoffset.ACTION_GET_OFFSET,
             "Get Address Offset",
             idaapi.SETMENU_APP
         )
-
-    # done
     return 0
 
 #------------------------------------------------------------------------------
