@@ -133,7 +133,7 @@ class cvutils_getoffset(idaapi.plugin_t):
 
     def _init_action_get_offset(self):
         """
-        Register the copy bytes action with IDA.
+        Register the get offset action with IDA.
         """   
         # If the action is already registered, unregister it first.
         if idaapi.unregister_action(self.ACTION_GET_OFFSET):
