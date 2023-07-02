@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
 # IDA Plugin to jump to an offset from the Imagebase.
-# Copy the 'cvutils-getoffset.py' into plugins directory of IDA
+# Copy the 'cvutils-getoffset.py' into the plugins directory of IDA
 #------------------------------------------------------------------------------
 
 VERSION = '1.0.0'
