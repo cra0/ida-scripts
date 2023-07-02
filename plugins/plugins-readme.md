@@ -31,3 +31,16 @@ Press the shortcut command `Shift+G` to open the input dialog.
 Input the offset you wish to jump to and press OK.
 
 ![screenshot-gotooffset-plugin](examples/plugin-gotooffset-demo.png)
+
+
+## [CFS Importer](cvutils-cfs-importer.py)
+
+This plugin allows you to import Function Signatures that have been previously exported using the export plugin.
+It esentially just does a binary search of each signature present in the .cfs file.If it finds a match it will rename the function at that location.
+
+### **Usage Instructions:**
+
+File->Load file->CFS File..
+Select the .cfs file in the explorer window.
+
+![screenshot-cfs-importer-plugin](examples/plugin-cfs-import-demo.png)
