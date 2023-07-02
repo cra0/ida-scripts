@@ -14,6 +14,9 @@ import os
 import idc
 import idaapi
 
+import ida_bytes
+import ida_funcs
+import ida_name
 
 major, minor = map(int, idaapi.get_kernel_version().split("."))
 using_ida7api = (major > 6)
