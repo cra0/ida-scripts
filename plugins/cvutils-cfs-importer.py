@@ -60,6 +60,17 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
         Get the file name from a given file path.
         """
         return os.path.basename(file_path)
+
+    def find_all_matches(self, min_ea, max_ea, signature):
+        matches = []
+        ea = idaapi.find_binary(min_ea, max_ea, signature, 16, idaapi.SEARCH_DOWN)
+
+        while ea != idaapi.BADADDR:
+            matches.append(ea)
+            ea = idaapi.find_binary(ea + 1, max_ea, signature, 16, idaapi.SEARCH_DOWN)
+
+        return matches    
+        
         
     def process_signatures(self, sig_file_path):
         """
@@ -71,6 +82,8 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
         min_ea = idaapi.cvar.inf.min_ea
         max_ea = idaapi.cvar.inf.max_ea
         is_64bit = idc.__EA64__
+
+        print("Processing Signatures...")
 
         with open(sig_file_path, "r") as sig_file:
             for line in sig_file:
@@ -90,8 +103,18 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
                 # Signature
                 signature = line.strip()[1:-1]  # Remove surrounding quotes
 
-                # Find the signature
-                ea = idaapi.find_binary(min_ea, max_ea, signature, 16, idaapi.SEARCH_DOWN)
+
+                # Find all matches
+                ea = idaapi.BADADDR
+                matches = self.find_all_matches(min_ea, max_ea, signature)
+                matches_count = len(matches)
+                if matches_count > 1:
+                    print("Multiple signature matches[%i] found for [%s] ignoring sig." % (matches_count, func_name))
+                    continue
+
+                # Set EA if we have only 1 hit, change this if you wish.
+                if matches_count == 1:
+                    ea = matches[0]
 
                 print(f"({resolved_count}/{counter}) [{ea:X}] [{func_name}] ==> ", end="")
 
@@ -168,20 +191,20 @@ class CFSImportPlugin(idaapi.plugin_t):
     def init(self):
         # Create a new action
         action_desc = idaapi.action_desc_t(
-            self.ACTION_IMPORT_SIGNATURES,   # The action name. This acts like an ID and must be unique
+            self.ACTION_IMPORT_SIGNATURES,   # The action name.
             'CFS File...',  # The action text.
             ImportFileMenuHandler(),  # The action handler.
-            PLUGIN_HOTKEY,   # Optional: the action shortcut
-            'Import a CFS File into the current idb.',  # Optional: the action tooltip (available in menus/toolbar)
-            self.ACTION_TOOLTIP_ICON)   # Icon
+            PLUGIN_HOTKEY,   # Optional: the action shortcut.
+            'Import a CFS File into the current idb.',  # Optional: the action tooltip.
+            self.ACTION_TOOLTIP_ICON)   # Icon.
 
         # Register the action
         idaapi.register_action(action_desc)
 
         # Attach the action to a menu item in the File menu.
-        idaapi.attach_action_to_menu('File/Load file/',   # The relative path of where to add the action
-                                      self.ACTION_IMPORT_SIGNATURES,   # The action ID (declared above)
-                                      idaapi.SETMENU_APP)   # We want to append the action after the 'Import...' menu item
+        idaapi.attach_action_to_menu('File/Load file/',   # The relative path of where to add the action.
+                                      self.ACTION_IMPORT_SIGNATURES,   # The action ID (declared above).
+                                      idaapi.SETMENU_APP)   # We want to append the action after.
 
         return idaapi.PLUGIN_KEEP
 
