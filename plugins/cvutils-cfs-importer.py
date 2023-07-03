@@ -61,15 +61,20 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
         """
         return os.path.basename(file_path)
 
-    def find_all_matches(self, min_ea, max_ea, signature):
+    def find_all_matches(self, min_ea, max_ea, signature, max_matches=-1):
         matches = []
         ea = idaapi.find_binary(min_ea, max_ea, signature, 16, idaapi.SEARCH_DOWN)
+        count = 0
 
         while ea != idaapi.BADADDR:
             matches.append(ea)
+            count += 1
+            if max_matches != -1 and count >= max_matches:
+                break
             ea = idaapi.find_binary(ea + 1, max_ea, signature, 16, idaapi.SEARCH_DOWN)
 
-        return matches    
+        return matches
+
         
         
     def process_signatures(self, sig_file_path):
@@ -106,7 +111,7 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
 
                 # Find all matches
                 ea = idaapi.BADADDR
-                matches = self.find_all_matches(min_ea, max_ea, signature)
+                matches = self.find_all_matches(min_ea, max_ea, signature, 2)
                 matches_count = len(matches)
                 if matches_count > 1:
                     print("Multiple signature matches[%i] found for [%s] ignoring sig." % (matches_count, func_name))
