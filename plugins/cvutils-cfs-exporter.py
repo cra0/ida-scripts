@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------
-# IDA Plugin to get an offset (rva) at the cursor position.
-# Copy the 'cvutils-getoffset.py' into plugins directory of IDA
+# IDA Plugin to export function signatures to my .cfs file format
+# Copy the 'cvutils-cfs-exporter.py' into plugins directory of IDA
 #------------------------------------------------------------------------------
 
 VERSION = '1.0.0'
