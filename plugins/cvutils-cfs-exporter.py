@@ -227,22 +227,20 @@ def get_screen_linear_address():
 # Export Functions
 #------------------------------------------------------------------------------
 
-def get_list_of_functions():
+def get_all_functions():
     '''
-    Gets all functions list.
+    Gets a dictionary of all function names (including library functions) and their corresponding addresses.
     '''
 
-    functions_list = {}
-    seg_ea = idc.get_segm_by_sel(idc.SEG_NORM)
+    functions_dict = {}
+    for seg_ea in idautils.Segments():
+        for func_ea in idautils.Functions(seg_ea):
+            function_name = idc.get_name(func_ea)
+            functions_dict[function_name] = func_ea
 
-    for func_ea in idautils.Functions(idc.get_segm_start(seg_ea),
-                                      idc.get_segm_end(seg_ea)):
-        function_name = idc.get_func_name(func_ea)
-        functions_list[function_name] = func_ea
+    return functions_dict
 
-    return functions_list
-
-def get_selected_funcs():
+def get_addresses_of_selected_functions():
     import sip
     twidget = ida_kernwin.find_widget("Functions window")
     widget  = sip.wrapinstance(int(twidget), QtWidgets.QWidget)
@@ -253,11 +251,11 @@ def get_selected_funcs():
 
     table = widget.findChild(QtWidgets.QTableView)
 
-    selected_funcs = [str(s.data()) for s in table.selectionModel().selectedRows()]
-    func_list = get_list_of_functions()
-    selected_funcs_ea = [func_list[func_name] for func_name in selected_funcs if func_name in func_list]
+    selected_function_names = [str(s.data()) for s in table.selectionModel().selectedRows()]
+    all_functions_dict = get_all_functions()
+    selected_functions_addresses = [all_functions_dict[function_name] for function_name in selected_function_names if function_name in all_functions_dict]
 
-    return selected_funcs_ea
+    return selected_functions_addresses
     
 def add_bytes_to_sig(sig, address, size):
     for i in range(size):
@@ -385,7 +383,7 @@ def GenerateSignature(ea):
 def export_signatures_go():
     sig_maker = SigMaker()
 
-    selected_funcs = get_selected_funcs()
+    selected_funcs = get_addresses_of_selected_functions()
     if not selected_funcs:
         print("No functions selected.")
         return
