@@ -44,7 +44,7 @@ else:
     QtCore.pyqtSlot = QtCore.Slot
     from PySide.QtGui import QApplication
     
-
+ 
 class ImportFileMenuHandler(idaapi.action_handler_t):
     def __init__(self):
         idaapi.action_handler_t.__init__(self)
@@ -74,9 +74,7 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
             ea = idaapi.find_binary(ea + 1, max_ea, signature, 16, idaapi.SEARCH_DOWN)
 
         return matches
-
-        
-        
+       
     def process_signatures(self, sig_file_path):
         """
         Process the signatures and resolve function names in IDA.
@@ -169,11 +167,18 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
             print("------------------------------------------")
             print("IDA Signature Resolver - cra0 (cra0.net)")
             print("Parsing:", sig_file_path)
+            
+            # Show the "Please wait" dialog before starting the heavy sigfind operation
+            idaapi.show_wait_box("Processing... Please Wait (This may take a while chill)")
+            
             if not self.process_signatures(sig_file_path):
                idaapi.warning("Some errors occurred while importing.") 
 
+            # Hide the "Please wait" dialog
+            idaapi.hide_wait_box()
 
-    # Say hello when invoked.
+
+    # Invoke the main
     def activate(self, ctx):
         self.main()  # call the main function when the action is activated
         return 1
