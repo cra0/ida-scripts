@@ -102,10 +102,9 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
                 # Function Name
                 func_name, line = line.split(",", 1)
                 func_name = func_name.strip()
-
+        
                 # Signature
                 signature = line.strip()[1:-1]  # Remove surrounding quotes
-
 
                 # Find all matches
                 ea = idaapi.BADADDR
@@ -123,10 +122,8 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
 
                 if ea != idaapi.BADADDR:
                     if ida_bytes.get_full_flags(ea) != idaapi.BADADDR:
-                        func_name_str = ida_name.get_name(ea)
-                        func_name_str_raw = idc.demangle_name(func_name_str, idc.get_inf_attr(idc.INF_SHORT_DN))
-                        func_print_name = func_name_str_raw if func_name_str_raw else func_name_str
-
+                        func_idb_name_str = ida_name.get_name(ea)
+                
                         if idc.get_func_flags(ea) == -1:
                             ida_bytes.del_items(ea, ida_bytes.DELIT_SIMPLE, 1)
                             idc.create_insn(ea)
@@ -135,12 +132,12 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
                             idc.set_cmt(ea, "SIG-RESOLVED " + func_name, 1)
                             resolved_count += 1
                             print("[RESOLVED]")
-                        elif func_name_str and len(func_name_str) >= 3:
-                            if func_name_str[:3] == "sub":
+                        elif func_idb_name_str and len(func_idb_name_str) >= 3:
+                            if func_idb_name_str[:3] == "sub":
                                 ida_name.set_name(ea, func_name, ida_name.SN_FORCE)
                                 idc.set_cmt(ea, "SIG-RESOLVED " + func_name, 1)
                                 resolved_count += 1
-                                print("[RENAMED+RESOLVED]", func_name_str, "TO", func_name)
+                                print("[RENAMED+RESOLVED]", func_idb_name_str, "TO", func_name)
                             else:
                                 print("[IGNORED] Function @ 0x{:X} seems named.".format(ea))
                         else:
