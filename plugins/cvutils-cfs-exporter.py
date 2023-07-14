@@ -229,6 +229,25 @@ def get_screen_linear_address():
 # Export Functions
 #------------------------------------------------------------------------------
 
+def get_demangled_function_name(function_name):
+    demangled_name = ida_name.demangle_name(function_name, ida_name.DQT_FULL)
+    if demangled_name is not None:
+        function_name = demangled_name
+    return function_name
+
+def get_clean_function_name(function_name):
+    demangled_function_name = get_demangled_function_name(function_name)
+    # Remove parameters from the function name if available
+    if '(' in demangled_function_name:
+        clean_function_name = demangled_function_name.split('(')[0]
+    else:
+        clean_function_name = demangled_function_name
+
+    # Remove return type from the function name
+    clean_function_name = clean_function_name.split()[-1]
+
+    return clean_function_name
+
 def get_all_functions():
     '''
     Gets a dictionary of all function names (including library functions) and their corresponding addresses.
@@ -239,19 +258,11 @@ def get_all_functions():
             f = ida_funcs.get_func(func_ea)
             if not f:
                 continue
-            function_name = idc.get_name(func_ea)
-            demangled_name = ida_name.demangle_name(function_name, ida_name.DQT_FULL)
-            if demangled_name is not None:
-                function_name = demangled_name  # Use the demangled name if it's available
+            function_name = idc.get_name(func_ea)          
+            function_name_clean = get_clean_function_name(function_name) # Demangle if possible
             
-            # Remove parameters from the function name
-            function_name = function_name.split('(')[0]
-            
-            # Remove return type from the function name
-            function_name = function_name.split()[-1]
-
             # Set in dictionary
-            functions_dict[function_name] = func_ea
+            functions_dict[function_name_clean] = func_ea
 
     return functions_dict
 
@@ -428,8 +439,11 @@ def export_signatures_go():
                 print(f"Failed to make a signature for function {func_name} at {start:x}")
                 continue
 
-            # Write the signature to the file
-            file.write(f"{count},\"{func_name}\",\"{sig}\"\n")
+            # Write the signature to the file, use the demangled name
+
+            clean_function_name = get_clean_function_name(func_name)
+
+            file.write(f"{count},\"{clean_function_name}\",\"{sig}\"\n")
             count += 1
 
     idaapi.hide_wait_box()
