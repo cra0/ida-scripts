@@ -16,6 +16,8 @@ import sys
 import idc
 import idaapi
 import idautils
+import ida_funcs
+import ida_name
 import ida_ua
 
 import ida_ida
@@ -231,11 +233,24 @@ def get_all_functions():
     '''
     Gets a dictionary of all function names (including library functions) and their corresponding addresses.
     '''
-
     functions_dict = {}
     for seg_ea in idautils.Segments():
         for func_ea in idautils.Functions(seg_ea):
+            f = ida_funcs.get_func(func_ea)
+            if not f:
+                continue
             function_name = idc.get_name(func_ea)
+            demangled_name = ida_name.demangle_name(function_name, ida_name.DQT_FULL)
+            if demangled_name is not None:
+                function_name = demangled_name  # Use the demangled name if it's available
+            
+            # Remove parameters from the function name
+            function_name = function_name.split('(')[0]
+            
+            # Remove return type from the function name
+            function_name = function_name.split()[-1]
+
+            # Set in dictionary
             functions_dict[function_name] = func_ea
 
     return functions_dict
@@ -251,10 +266,12 @@ def get_addresses_of_selected_functions():
 
     table = widget.findChild(QtWidgets.QTableView)
 
-    selected_function_names = [str(s.data()) for s in table.selectionModel().selectedRows()]
+    # Trim each function name before adding it to selected_function_names
+    selected_function_names = [str(s.data()).split('(')[0].split()[-1] for s in table.selectionModel().selectedRows()]
+    # Get all functions in Idb
     all_functions_dict = get_all_functions()
+    # Map 1 <==> 1
     selected_functions_addresses = [all_functions_dict[function_name] for function_name in selected_function_names if function_name in all_functions_dict]
-
     return selected_functions_addresses
     
 def add_bytes_to_sig(sig, address, size):
@@ -385,7 +402,7 @@ def export_signatures_go():
 
     selected_funcs = get_addresses_of_selected_functions()
     if not selected_funcs:
-        print("No functions selected.")
+        print("No suitable functions selected.")
         return
 
     # Prompt for the output file path
@@ -393,6 +410,8 @@ def export_signatures_go():
     if not filename:
         print("No file selected.")
         return
+        
+    idaapi.show_wait_box("Exporting signatures...")
 
     # Build sigs and export!
     count = 0
@@ -412,6 +431,8 @@ def export_signatures_go():
             # Write the signature to the file
             file.write(f"{count},\"{func_name}\",\"{sig}\"\n")
             count += 1
+
+    idaapi.hide_wait_box()
 
     print(f"Exported {count} function signatures to {filename}")
     idaapi.warning("Exported %i function signatures to %s \n" % (count, filename))
