@@ -36,7 +36,7 @@ Input the offset you wish to jump to and press OK.
 ## [CFS Importer](cvutils-cfs-importer.py)
 
 This plugin allows you to import Function Signatures that have been previously exported using the export plugin.
-It esentially just does a binary search of each signature present in the .cfs file.If it finds a match it will rename the function at that location.
+It esentially just does a binary search of each signature present in the .cfs file. If it finds a match it will rename the function at that location.
 
 ### **Usage Instructions:**
 
@@ -44,3 +44,10 @@ File->Load file->CFS File..
 Select the .cfs file in the explorer window.
 
 ![screenshot-cfs-importer-plugin](examples/plugin-cfs-import-demo.png)
+
+## [CFS Exporter](cvutils-cfs-exporter.py)
+
+This plugin allows you to export Function Signatures in IDA.
+Select a function or functions in IDA's functions window. Right click -> Export Signatures and choice a file path and name to export.
+
+![screenshot-cfs-exporter-plugin](examples/plugin-cfs-export-demo.png)
