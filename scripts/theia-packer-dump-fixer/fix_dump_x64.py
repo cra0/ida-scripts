@@ -41,8 +41,6 @@ def identify_functions():
 
     while ea < max_ea:
 
-        idaapi.process_ui_action(None)
-        
         # Check Segment is executable
         if not is_executable_segment(ea):
             segment_end = get_segment_end(ea)
@@ -50,7 +48,7 @@ def identify_functions():
                 ea = segment_end
                 continue
             else:
-                print(f"Unable to get segment end @ 0x{ea:x}")
+                #print(f"Unable to get segment end @ 0x{ea:x}")
                 ea += 1
                 continue
 
@@ -75,11 +73,19 @@ def identify_functions():
                 print("No more occurrences of 'F1' found, exiting.")
                 ea+= 1
                 continue
-            
-           
         
-        print(f"Found @ 0x{ea:x}")
-        #break       
+        
+        if not is_executable_segment(ea):
+                    segment_end = get_segment_end(ea)
+                    if segment_end != -1:
+                        ea = segment_end
+                        continue
+                    else:
+                        ea += 1
+                        continue       
+        
+        
+        #print(f"Found @ 0x{ea:x}")     
    
         # Check if the next byte is 'F1', if not, continue searching
         if ida_bytes.get_byte(ea) != 0xF1:
