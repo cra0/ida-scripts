@@ -28,7 +28,6 @@ if idaver_74newer:
     #IDA 7.4+
     #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
     import ida_ida
-    import ida_kernwin
 
 if using_pyqt5:
     import PyQt5.QtGui as QtGui
@@ -159,7 +158,7 @@ class ImportFileMenuHandler(idaapi.action_handler_t):
         return True
 
     def main(self):
-        sig_file_path = ida_kernwin.ask_file(0, "*.cfs", "Cra0 Signature Definition File")
+        sig_file_path = idaapi.ask_file(0, "*.cfs", "Cra0 Signature Definition File")
         if sig_file_path:
             print("------------------------------------------")
             print("IDA Signature Resolver - cra0 (cra0.net)")
