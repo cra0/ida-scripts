@@ -3,7 +3,7 @@
 # Copy the 'cvutils-getoffset.py' into the plugins directory of IDA
 #------------------------------------------------------------------------------
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 __AUTHOR__ = 'cra0'
 
 PLUGIN_NAME = "Go To Offset"
@@ -24,8 +24,14 @@ using_ida7api = (major > 6)
 using_pyqt5 = using_ida7api or (major == 6 and minor >= 9)
 
 idaver_74newer = (major == 7 and minor >= 4)
+idaver_8newer = (major >= 8)
 
-if idaver_74newer:
+if idaver_74newer or idaver_8newer:
+    is_version_compatible = True
+else:
+    is_version_compatible = False
+
+if is_version_compatible:
     #IDA 7.4+
     #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
     import ida_ida
@@ -145,7 +151,7 @@ class cvutils_gotooffset(idaapi.plugin_t):
 # Display a warning message box
 #------------------------------------------------------------------------------
 def display_warning(message): 
-    if idaver_74newer:
+    if is_version_compatible:
         return idaapi.warning(message)
     else:
         return idc.Warning(message)
@@ -154,7 +160,7 @@ def display_warning(message):
 # Jump to a certain address
 #------------------------------------------------------------------------------
 def jump_to_address(jump_address): 
-    if idaver_74newer:
+    if is_version_compatible:
         ida_kernwin.jumpto(jump_address)
     else:
         idc.Jump(jump_address)
@@ -164,7 +170,7 @@ def jump_to_address(jump_address):
 # Image Min EA
 #------------------------------------------------------------------------------
 def get_minEA(): 
-    if idaver_74newer:
+    if is_version_compatible:
         return ida_ida.inf_get_min_ea()
     else:
         return idc.MinEA()
@@ -217,7 +223,7 @@ def goto_offset():
     
     #Use string for now, force them to use hex as the offset
     offset_value=None
-    if idaver_74newer:
+    if is_version_compatible:
         offset_value = ida_kernwin.ask_str("0x%x" % hint_min_offset, 0, "To Offset[HEX]:")    
     else:
         offset_value = idc.AskStr("0x%x" % hint_min_offset, "To Offset[HEX]:")

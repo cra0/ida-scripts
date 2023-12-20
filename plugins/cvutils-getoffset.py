@@ -3,7 +3,7 @@
 # Copy the 'cvutils-getoffset.py' into the plugins directory of IDA
 #------------------------------------------------------------------------------
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 __AUTHOR__ = 'cra0'
 
 PLUGIN_NAME = "Get Address Offset"
@@ -22,8 +22,14 @@ using_ida7api = (major > 6)
 using_pyqt5 = using_ida7api or (major == 6 and minor >= 9)
 
 idaver_74newer = (major == 7 and minor >= 4)
+idaver_8newer = (major >= 8)
 
-if idaver_74newer:
+if idaver_74newer or idaver_8newer:
+    is_version_compatible = True
+else:
+    is_version_compatible = False
+
+if is_version_compatible:
     #IDA 7.4+
     #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
     import ida_ida
@@ -186,10 +192,10 @@ class Hooks(idaapi.UI_Hooks):
 
         # Get the IDA version
         major, minor = map(int, idaapi.get_kernel_version().split("."))
-        self.idaver_74newer = (major == 7 and minor >= 4)
+        self.is_version_compatible = (major == 7 and minor >= 4)
         
         # If the IDA version is less than 7.4, define finish_populating_tform_popup
-        if not self.idaver_74newer:
+        if not self.is_version_compatible:
             self.finish_populating_tform_popup = self._finish_populating_tform_popup
 
     def finish_populating_widget_popup(self, widget, popup_handle, ctx=None):
@@ -251,7 +257,7 @@ def inject_address_offset_copy_actions(widget, popup_handle, widget_type):
 # Get Screen linear address
 #------------------------------------------------------------------------------
 def get_screen_linear_address(): 
-    if idaver_74newer:
+    if is_version_compatible:
         return idc.get_screen_ea()
     else:
         return idc.ScreenEA()
