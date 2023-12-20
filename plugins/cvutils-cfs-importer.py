@@ -3,7 +3,7 @@
 # Copy the 'cvutils-cfs-importer.py' into the plugins directory of IDA
 #------------------------------------------------------------------------------
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 __AUTHOR__ = 'cra0'
 
 PLUGIN_NAME = "CFS Importer"
@@ -23,8 +23,14 @@ using_ida7api = (major > 6)
 using_pyqt5 = using_ida7api or (major == 6 and minor >= 9)
 
 idaver_74newer = (major == 7 and minor >= 4)
+idaver_8newer = (major >= 8)
 
-if idaver_74newer:
+if idaver_74newer or idaver_8newer:
+    newer_version_compatible = True
+else:
+    newer_version_compatible = False
+
+if newer_version_compatible:
     #IDA 7.4+
     #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
     import ida_ida
