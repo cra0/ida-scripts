@@ -3,14 +3,12 @@
 # Copy the 'cvutils-getoffset.py' into the plugins directory of IDA
 #------------------------------------------------------------------------------
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 __AUTHOR__ = 'cra0'
 
 PLUGIN_NAME = "Get Address Offset"
 PLUGIN_HOTKEY = "Ctrl+Shift+C"
 
-
-  
 import os
 import sys
 import idc
@@ -29,11 +27,24 @@ if idaver_74newer or idaver_8newer:
 else:
     newer_version_compatible = False
 
+IDA_9 = (major >= 9)
+
 if newer_version_compatible:
-    #IDA 7.4+
-    #https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
+    # IDA 7.4+
+    # https://hex-rays.com/products/ida/support/ida74_idapython_no_bc695_porting_guide.shtml
     import ida_ida
     import ida_kernwin
+
+if IDA_9:
+    BITS = 32 if not ida_ida.inf_is_64bit() else 64
+    BWN_DISASM = ida_kernwin.BWN_DISASM
+    BWN_PSEUDOCODE = ida_kernwin.BWN_PSEUDOCODE
+    SETMENU_APP = ida_kernwin.SETMENU_APP
+else:
+    BITS = 32 if not idaapi.get_inf_structure().is_64bit() else 64
+    BWN_DISASM = idaapi.BWN_DISASMS
+    BWN_PSEUDOCODE = idaapi.BWN_PSEUDOCODE
+    SETMENU_APP = idaapi.SETMENU_APP
 
 if using_pyqt5:
     import PyQt5.QtGui as QtGui
@@ -52,7 +63,7 @@ else:
 
 def setClipboardText(data):
     cb = QApplication.clipboard()
-    cb.clear(mode=cb.Clipboard )
+    cb.clear(mode=cb.Clipboard)
     cb.setText(data, mode=cb.Clipboard)
 
 
@@ -62,10 +73,11 @@ def PLUGIN_ENTRY():
     """
     return cvutils_getoffset()
 
+
 class cvutils_getoffset(idaapi.plugin_t):
 
     flags = idaapi.PLUGIN_PROC | idaapi.PLUGIN_HIDE
-    comment = "Get the Adress offset at the cursor location."
+    comment = "Get the Address offset at the cursor location."
     help = "At a certain location right-click 'Get Offset'"
     wanted_name = PLUGIN_NAME
     wanted_hotkey = PLUGIN_HOTKEY
@@ -106,7 +118,6 @@ class cvutils_getoffset(idaapi.plugin_t):
         # unregister our actions & free their resources
         self._del_action_get_offset()
 
-
         # done
         idaapi.msg("%s terminated...\n" % self.wanted_name)
 
@@ -124,7 +135,7 @@ class cvutils_getoffset(idaapi.plugin_t):
 
     def _init_hexrays_hooks(self):
         """
-        Install Hex-Rrays hooks (when available).
+        Install Hex-Rays hooks (when available).
         NOTE: This is called when the ui_ready_to_run event fires.
         """
         if idaapi.init_hexrays_plugin():
@@ -134,50 +145,34 @@ class cvutils_getoffset(idaapi.plugin_t):
     # IDA Actions
     #--------------------------------------------------------------------------
 
-    ACTION_GET_OFFSET  = "prefix:get_offset"
-
+    ACTION_GET_OFFSET = "prefix:get_offset"
 
     def _init_action_get_offset(self):
         """
         Register the get offset action with IDA.
-        """   
+        """
         # If the action is already registered, unregister it first.
         if idaapi.unregister_action(self.ACTION_GET_OFFSET):
             idaapi.msg("Warning: action was already registered, unregistering it first\n")
-        
+
         vaction_desc = "Get the offset from the image base of the current cursor address."
-        if (sys.version_info > (3, 0)):
-            # Describe the action using python3 copy
-            action_desc = idaapi.action_desc_t(
-                self.ACTION_GET_OFFSET,                                     # The action name.
-                "Get Offset",                                               # The action text.
-                IDACtxEntry(getcopy_offset),                                # The action handler.
-                PLUGIN_HOTKEY,                                              # Optional: action shortcut
-                vaction_desc,                                               # Optional: tooltip
-                31                                                          # Copy icon
-            )
-        else:
-            # Describe the action using python2 copy
-            action_desc = idaapi.action_desc_t(
-                self.ACTION_GET_OFFSET,                                 # The action name.
-                "Get Offset",                                           # The action text.
-                IDACtxEntry(getcopy_offset),                            # The action handler.
-                PLUGIN_HOTKEY,                                          # Optional: action shortcut
-                vaction_desc,                                           # Optional: tooltip
-                31                                                      # Copy icon
-            )
+        action_desc = idaapi.action_desc_t(
+            self.ACTION_GET_OFFSET,  # The action name.
+            "Get Offset",  # The action text.
+            IDACtxEntry(getcopy_offset),  # The action handler.
+            PLUGIN_HOTKEY,  # Optional: action shortcut
+            vaction_desc,  # Optional: tooltip
+            31  # Copy icon
+        )
 
         # register the action with IDA
         assert idaapi.register_action(action_desc), "Action registration failed"
-
 
     def _del_action_get_offset(self):
         """
         Delete the bulk prefix action from IDA.
         """
         idaapi.unregister_action(self.ACTION_GET_OFFSET)
-
-
 
 
 #------------------------------------------------------------------------------
@@ -193,7 +188,7 @@ class Hooks(idaapi.UI_Hooks):
         # Get the IDA version
         major, minor = map(int, idaapi.get_kernel_version().split("."))
         self.newer_version_compatible = (major == 7 and minor >= 4) or (major >= 8)
-        
+
         # If the IDA version is less than 7.4, define finish_populating_tform_popup
         if not self.newer_version_compatible:
             self.finish_populating_tform_popup = self._finish_populating_tform_popup
@@ -202,9 +197,10 @@ class Hooks(idaapi.UI_Hooks):
         """
         A right click menu is about to be shown. (IDA 7.x)
         """
-        inject_address_offset_copy_actions(widget, popup_handle, idaapi.get_widget_type(widget))
+        widget_type = idaapi.get_widget_type(widget)
+        if widget_type is not None:
+            inject_address_offset_copy_actions(widget, popup_handle, widget_type)
         return 0
-
 
     def _finish_populating_tform_popup(self, form, popup):
         """
@@ -215,15 +211,8 @@ class Hooks(idaapi.UI_Hooks):
 
     def hxe_callback(self, event, *args):
         """
-        HexRays event callback.
+        Hex-Rays event callback.
         """
-
-        #
-        # if the event callback indicates that this is a popup menu event
-        # (in the hexrays window), we may want to install our prefix menu
-        # actions depending on what the cursor right clicked.
-        #
-
         if event == idaapi.hxe_populating_popup:
             form, popup, vu = args
 
@@ -232,31 +221,38 @@ class Hooks(idaapi.UI_Hooks):
                 popup,
                 cvutils_getoffset.ACTION_GET_OFFSET,
                 "Get Address Offset",
-                idaapi.SETMENU_APP,
+                SETMENU_APP,
             )
 
         # done
         return 0
+
 
 #------------------------------------------------------------------------------
 # Prefix Wrappers
 #------------------------------------------------------------------------------
 
 def inject_address_offset_copy_actions(widget, popup_handle, widget_type):
-    if widget_type == idaapi.BWN_DISASMS:
-        idaapi.attach_action_to_popup(
-            widget,
-            popup_handle,
-            cvutils_getoffset.ACTION_GET_OFFSET,
-            "Get Address Offset",
-            idaapi.SETMENU_APP
-        )
+    try:
+        if widget_type in [BWN_DISASM, BWN_PSEUDOCODE]:
+            idaapi.attach_action_to_popup(
+                widget,
+                popup_handle,
+                cvutils_getoffset.ACTION_GET_OFFSET,
+                "Get Address Offset",
+                SETMENU_APP
+            )
+    except AttributeError:
+        # Handle older versions where the widget type constants might differ
+        pass
     return 0
+
 
 #------------------------------------------------------------------------------
 # Get Screen linear address
 #------------------------------------------------------------------------------
-def get_screen_linear_address(): 
+
+def get_screen_linear_address():
     if newer_version_compatible:
         return idc.get_screen_ea()
     else:
@@ -275,9 +271,10 @@ def getcopy_offset():
     vCurrentPos = get_screen_linear_address()
     if vCurrentPos != idaapi.BADADDR:
         vOffset = vCurrentPos - vImagebase
-        print ("Address [0x%x] =-> Offset [%x] Copied to Clipboard!" % (vCurrentPos, vOffset))
+        print("Address [0x%x] =-> Offset [%x] Copied to Clipboard!" % (vCurrentPos, vOffset))
         setClipboardText("%x" % vOffset)
     return
+
 
 #------------------------------------------------------------------------------
 # IDA ctxt
@@ -295,7 +292,8 @@ class IDACtxEntry(idaapi.action_handler_t):
 
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
-        
+
+
 #------------------------------------------------------------------------------
 # Utilities
 #------------------------------------------------------------------------------
